@@ -9,11 +9,12 @@ from tqdm import tqdm
 from PIL import Image
 from io import BytesIO
 from time import sleep
+from tqdm import tqdm
 import re
 import requests
 import base64
 
-def download(_driver,name,translate=False):
+def download(_driver,name):
 	length = 0
 	thread = True
 	done = []
@@ -76,44 +77,59 @@ def download(_driver,name,translate=False):
 		else:
 			length = len(_driver.find_elements(By.TAG_NAME, 'img'))
 			print('find imgs number: '+ str(length))
+			_driver.quit()
 
 def translate(word):
-	import urllib2, json, urllib 
+	import http.client
+	import hashlib
+	from urllib import parse
+	import random
 
-	data = {}
-	data["appkey"] = "your_appkey_here"
-	data["type"] = "google"
-	data["from"] = "zh-CN"
-	data["to"] = "en"
-	data["text"] = "书"
- 
-	url_values = urllib.urlencode(data)
-	url = "http://api.jisuapi.com/translate/translate" + "?" + url_values
-	request = urllib2.Request(url)
-	result = urllib2.urlopen(request)
-	jsonarr = json.loads(result.read())
- 
-	# if jsonarr["status"] != u"0":
-	#     print jsonarr["msg"]
-	#     exit()
-	# result = jsonarr["result"]
-	# print result["result"]
+	words = []
+	appid = '20180113000114961'
+	secretKey = 'i44gpYaLOWY7YhRdr7jj'
+	httpClient = None
+
+	q = word
+	fromLang = 'auto'
+	toLang = ['zh','en','jp','kor','fra','spa','th','ru','pt','de']
+	salt = str(random.randint(32768, 65536))
+	sign = appid+q+salt+secretKey
+	m1 = hashlib.md5()
+	m1.update(sign.encode(encoding='utf-8'))
+	sign = m1.hexdigest()
+
+	try:
+		for tl in toLang:	
+			httpClient = http.client.HTTPConnection('api.fanyi.baidu.com')
+			myurl = '/api/trans/vip/translate'
+			myurl = myurl+'?appid='+appid+'&q='+parse.quote(q)+'&from='+fromLang+'&to='+tl+'&salt='+str(salt)+'&sign='+sign 		
+			httpClient.request('GET', myurl)
+			response = httpClient.getresponse()
+			string = response.read().decode('utf-8')
+			string = eval(string) #str to dict
+			words.append(string['trans_result'][0]['dst'])
+
+	except Exception as e:
+	    print(e)
+	    pass
+	finally:
+	    if httpClient:
+	        httpClient.close()
+	        print(words)
+	return words
 
 
 
 search_query = input('please input:')
-driver = webdriver.Chrome()
-# driver.get('http://image.baidu.com/search/index?tn=baiduimage&ps=1&ct=201326592&lm=-1&cl=2&nc=1&ie=utf-8&word='+search_query)
-driver.get('https://www.google.com.hk/search?q='+search_query+'&source=lnms&tbm=isch')
-
-print(translate(search_query))
-
-# print(driver.page_source)
 
 
-# try:	
-# 	download(driver,search_query)
-# except:
-# 	print('download finish')
+words = translate(search_query)
 
+for word in words:
+	driver = webdriver.Chrome()
+	driver.get('https://www.google.com.hk/search?q='+word+'&source=lnms&tbm=isch')
+	print('begin download ' + word + ':')
+	download(driver,word)
+	
 assert "No results found." not in driver.page_source
