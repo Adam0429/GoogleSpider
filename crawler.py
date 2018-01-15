@@ -1,7 +1,7 @@
 # https://selenium-python-zh.readthedocs.io/en/latest/getting-started.html
 
 from selenium import webdriver
-from selenium.webdriver.common.by import By
+from selenium.webdriver.common.by import By 
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,21 +14,21 @@ import re
 import requests
 import base64
 
-def download(_driver,name):
+def download(_driver,name,imglist):
 	length = 0
 	thread = True
-	done = []
+	b = False
+	done = []				#not download pictures,the pictures that have processed
 	i = 0
 	while thread:
 		js = "window.scroll(0,99999999999)"
 		print('page down...')
 		_driver.execute_script(js)
 		print('page down finish')
-
+		sleep(1)
 		imgs = []
 
 		elements = driver.find_elements(By.TAG_NAME, 'img')
-
 
 		for ele in elements:
 			imgs.append(ele.get_attribute('src'))
@@ -36,10 +36,12 @@ def download(_driver,name):
 		for img in tqdm(imgs[len(done):len(imgs)]): 
 			
 			try:
-				done.append(img)
+				done.append(img)				
 				if img is None:
 					pass
-				if len(img) < 300:
+				if img in imglist:				#throw duplicate pictures
+					pass
+				if len(img) < 300:						#not base64 
 					r = requests.get(img, stream=True,timeout=5) 
 				
 					if r.status_code == 200: 
@@ -65,19 +67,26 @@ def download(_driver,name):
 			except Exception as e:
 				pass
 		
+		for img in imgs:
+			imglist.add(img)
 
 		if length == len(_driver.find_elements(By.TAG_NAME, 'img')):
 			button = _driver.find_elements(By.ID,'smb')
 			if len(button) == 0:
 				print('imgs load finshed')
-				thread = False
+				thread = False	
 				_driver.quit()
 			else:
-				button[0].click()
+				if b == False:			
+					button[0].click()
+					b = True
+				else:	
+					print('imgs load finshed')
+					thread = False	
+					_driver.quit()					
 		else:
 			length = len(_driver.find_elements(By.TAG_NAME, 'img'))
 			print('find imgs number: '+ str(length))
-			_driver.quit()
 
 def translate(word):
 	import http.client
@@ -124,12 +133,20 @@ def translate(word):
 search_query = input('please input:')
 
 
+# driver = webdriver.Chrome()
+# driver.get('https://www.google.com.hk/search?q='+search_query+'&source=lnms&tbm=isch')
+# download(driver,search_query)
+
+
 words = translate(search_query)
 
+imglist= set()
 for word in words:
 	driver = webdriver.Chrome()
-	driver.get('https://www.google.com.hk/search?q='+word+'&source=lnms&tbm=isch')
+	driver.get('https://www.google.com/search?q='+word+'&newwindow=1&source=lnms&tbm=isch&sa=X&ved=0ahUKEwi9mdCtmdnYAhXLv7wKHfaGBWEQ_AUIDygA&biw=1300&bih=951')
 	print('begin download ' + word + ':')
-	download(driver,word)
+	download(driver,word,imglist)
+	print('imglist:'+str(len(imglist)))
+
 	
 assert "No results found." not in driver.page_source
