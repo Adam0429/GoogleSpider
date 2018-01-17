@@ -13,68 +13,72 @@ import re
 import requests
 import base64
 
+contents = ['姐姐妹妹','爸爸儿子','妈妈女儿','表哥表弟','表姐表妹','兄弟姐妹','家庭合照','全家福','三胞胎','四胞胎','三弟兄']
+
+# search_query = input('please input:')
+for search_query in  tqdm(contents):
+	driver = webdriver.Chrome()
+	driver.get('https://www.google.com/search?q='+search_query+'&newwindow=1&source=lnms&tbm=isch&sa=X&ved=0ahUKEwi9mdCtmdnYAhXLv7wKHfaGBWEQ_AUIDygA&biw=1300&bih=951')
 
 
-search_query = input('please input:')
 
-driver = webdriver.Chrome()
-driver.get('https://www.google.com/search?q='+search_query+'&newwindow=1&source=lnms&tbm=isch&sa=X&ved=0ahUKEwi9mdCtmdnYAhXLv7wKHfaGBWEQ_AUIDygA&biw=1300&bih=951')
+# length = 0
+# thread = True
+# b = False
+# done = []				#not download pictures,the pictures that have processed
+# i = 0
+# while thread:
+# 	js = "window.scroll(0,99999999999)"
+# 	print('page down...')
+# 	driver.execute_script(js)
+# 	print('page down finish')		# sleep(1)
+# 	imgs = []
 
+# 	elements = driver.find_elements(By.TAG_NAME, 'img')
 
+# 	for ele in elements:
+# 		imgs.append(ele.get_attribute('src'))
 
-length = 0
-thread = True
-b = False
-done = []				#not download pictures,the pictures that have processed
-i = 0
-while thread:
-	js = "window.scroll(0,99999999999)"
-	print('page down...')
-	driver.execute_script(js)
-	print('page down finish')		# sleep(1)
-	imgs = []
+# 	if length == len(driver.find_elements(By.TAG_NAME, 'img')):
+# 		button = driver.find_elements(By.ID,'smb')
 
-	elements = driver.find_elements(By.TAG_NAME, 'img')
+# 		if len(button) == 0:
+# 			print('imgs load finshed')
+# 			thread = False	
 
-	for ele in elements:
-		imgs.append(ele.get_attribute('src'))
-
-	if length == len(driver.find_elements(By.TAG_NAME, 'img')):
-		button = driver.find_elements(By.ID,'smb')
-
-		if len(button) == 0:
-			print('imgs load finshed')
-			thread = False	
-
-		else:
-			if b == False:			
-				button[0].click()
-				b = True
-			else:	
-				print('imgs load finshed')
-				thread = False	
+# 		else:
+# 			if b == False:			
+# 				button[0].click()
+# 				b = True
+# 			else:	
+# 				print('imgs load finshed')
+# 				thread = False	
 						
-	else:
-		length = len(driver.find_elements(By.TAG_NAME, 'img'))
-		print('find imgs number: '+ str(length))
+# 	else:
+# 		length = len(driver.find_elements(By.TAG_NAME, 'img'))
+# 		print('find imgs number: '+ str(length))
 
-js = "window.scroll(0,0)"
-driver.execute_script(js)
-clickimg = driver.find_elements(By.TAG_NAME, 'img')
-clickdone = set()	
-clickdone.add(clickimg[0])
-clickimg.remove(clickimg[0])
-imgsdone = set()
-Thread = True
-n = 0
-print('begin========')
-while Thread:
-	
-	for i in tqdm(clickimg):
+# js = "window.scroll(0,0)"
+# driver.execute_script(js)
+	clickimg = driver.find_elements(By.TAG_NAME, 'img')
+	clickdone = set()	
+	clickdone.add(clickimg[0])
+	clickimg.remove(clickimg[0])
+	imgsdone = set()
+	Thread = True
+	n = 0
+	cur = 1
+	length = len(clickimg)
+	print('begin========')
+	while Thread:
+
 		try:
-			# id = id + 1
-			clickdone.add(i)
-			i.click()
+			print(cur)
+			cur = cur + 1
+			clickdone.add(clickimg[cur])
+			clickimg[cur].click()
+			sleep(0.5)
+			clickimg[cur].click()
 			tag_a = driver.find_elements(By.TAG_NAME, 'a')		
 			for a in tag_a: 	
 				if a.get_attribute('class') == 'irc_fsl i3596':
@@ -84,18 +88,22 @@ while Thread:
 						r = requests.get(url, stream=True,timeout=5)
 						if r.status_code == 200: 
 							imgtype = url[-3:]
-							with open('/home/wangfeihong/pic/'+str(n)+'.'+imgtype,'wb') as f:
+							with open('/home/wangfeihong/pic/'+search_query+str(n)+'.'+imgtype,'wb') as f:
 								for chunk in r.iter_content(1024): 
 									f.write(chunk)
 									# imgsdone.add(line)
 								n = n + 1
-								print(str(n)+'.'+imgtype)
+								print(search_query+str(n)+'.'+imgtype)
 								imgsdone.add(url)
 
 		except KeyboardInterrupt:
 			break
 		except Exception as e:		
 			print(e)
+			print('!!!')
+			clickimg = driver.find_elements(By.TAG_NAME, 'img')
+			if len(clickimg) == length:
+				Thread = False 
 			pass
 
 
