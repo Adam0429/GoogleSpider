@@ -4,6 +4,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.command import Command
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import WebDriverException
 from tqdm import tqdm
 from PIL import Image
 from io import BytesIO
@@ -13,7 +14,7 @@ import re
 import requests
 import base64
 
-contents = ['姐姐妹妹','爸爸儿子','妈妈女儿','表哥表弟','表姐表妹','兄弟姐妹','家庭合照','全家福','三胞胎','四胞胎','三弟兄']
+contents = ['爸爸儿子','妈妈女儿','表哥表弟','表姐表妹','兄弟姐妹','家庭合照','全家福','三胞胎','四胞胎','三弟兄']
 
 # search_query = input('please input:')
 for search_query in  tqdm(contents):
@@ -21,45 +22,6 @@ for search_query in  tqdm(contents):
 	driver.get('https://www.google.com/search?q='+search_query+'&newwindow=1&source=lnms&tbm=isch&sa=X&ved=0ahUKEwi9mdCtmdnYAhXLv7wKHfaGBWEQ_AUIDygA&biw=1300&bih=951')
 
 
-
-# length = 0
-# thread = True
-# b = False
-# done = []				#not download pictures,the pictures that have processed
-# i = 0
-# while thread:
-# 	js = "window.scroll(0,99999999999)"
-# 	print('page down...')
-# 	driver.execute_script(js)
-# 	print('page down finish')		# sleep(1)
-# 	imgs = []
-
-# 	elements = driver.find_elements(By.TAG_NAME, 'img')
-
-# 	for ele in elements:
-# 		imgs.append(ele.get_attribute('src'))
-
-# 	if length == len(driver.find_elements(By.TAG_NAME, 'img')):
-# 		button = driver.find_elements(By.ID,'smb')
-
-# 		if len(button) == 0:
-# 			print('imgs load finshed')
-# 			thread = False	
-
-# 		else:
-# 			if b == False:			
-# 				button[0].click()
-# 				b = True
-# 			else:	
-# 				print('imgs load finshed')
-# 				thread = False	
-						
-# 	else:
-# 		length = len(driver.find_elements(By.TAG_NAME, 'img'))
-# 		print('find imgs number: '+ str(length))
-
-# js = "window.scroll(0,0)"
-# driver.execute_script(js)
 	clickimg = driver.find_elements(By.TAG_NAME, 'img')
 	clickdone = set()	
 	clickdone.add(clickimg[0])
@@ -73,12 +35,13 @@ for search_query in  tqdm(contents):
 	while Thread:
 
 		try:
-			print(cur)
 			cur = cur + 1
-			clickdone.add(clickimg[cur])
 			clickimg[cur].click()
 			sleep(0.5)
 			clickimg[cur].click()
+			clickdone.add(clickimg[cur])
+			print('len: '+str(len(clickimg)))
+			print('cur: '+str(cur))
 			tag_a = driver.find_elements(By.TAG_NAME, 'a')		
 			for a in tag_a: 	
 				if a.get_attribute('class') == 'irc_fsl i3596':
@@ -95,14 +58,14 @@ for search_query in  tqdm(contents):
 								n = n + 1
 								print(search_query+str(n)+'.'+imgtype)
 								imgsdone.add(url)
-
 		except KeyboardInterrupt:
 			break
-		except Exception as e:		
+		except Exception as e:
+			print('len: '+str(len(clickimg)))
+			print('cur: '+str(cur))
 			print(e)
-			print('!!!')
 			clickimg = driver.find_elements(By.TAG_NAME, 'img')
-			if len(clickimg) == length:
+			if len(clickimg) < cur:
 				Thread = False 
 			pass
 

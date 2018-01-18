@@ -89,6 +89,7 @@ def download(_driver,name):
 			print('find imgs number: '+ str(length))
 
 def downloadorigin(_driver,name):
+	
 	clickimg = driver.find_elements(By.TAG_NAME, 'img')
 	clickdone = set()	
 	clickdone.add(clickimg[0])
@@ -102,12 +103,13 @@ def downloadorigin(_driver,name):
 	while Thread:
 
 		try:
-			print(cur)
 			cur = cur + 1
+			clickimg[cur].click()
+			sleep(0.5)
+			clickimg[cur].click()
 			clickdone.add(clickimg[cur])
-			clickimg[cur].click()
-			sleep(0.3)
-			clickimg[cur].click()
+			print('len: '+str(len(clickimg)))
+			print('cur: '+str(cur))
 			tag_a = driver.find_elements(By.TAG_NAME, 'a')		
 			for a in tag_a: 	
 				if a.get_attribute('class') == 'irc_fsl i3596':
@@ -124,12 +126,12 @@ def downloadorigin(_driver,name):
 								n = n + 1
 								print(search_query+str(n)+'.'+imgtype)
 								imgsdone.add(url)
-
 		except KeyboardInterrupt:
 			break
-		except Exception as e:		
+		except Exception as e:
+			print('len: '+str(len(clickimg)))
+			print('cur: '+str(cur))
 			print(e)
-			print('!!!')
 			clickimg = driver.find_elements(By.TAG_NAME, 'img')
 			if len(clickimg) < cur:
 				Thread = False 
